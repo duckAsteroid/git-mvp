@@ -1,0 +1,55 @@
+plugins {
+    id 'groovy-gradle-plugin'
+    id 'com.gradle.plugin-publish' version '1.2.1'
+    id "com.github.ben-manes.versions" version "0.50.0"
+}
+
+gradlePlugin {
+    plugins {
+        gitVersionPlugin {
+            id = 'io.github.duckasteroid.git-mvp'
+            displayName = 'Git Multi-project Versioning Plugin'
+            description = 'A plugin to provide automated project versioning from Git tags'
+            implementationClass = 'io.github.duckasteroid.git.mvp.GitVersioningPlugin'
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/duckasteroid/git-mvp"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    //2.2-groovy-3.0
+    testImplementation platform("org.spockframework:spock-bom:2.3-groovy-3.0")
+    testImplementation 'org.spockframework:spock-core'
+}
+
+tasks.withType(Test).configureEach {
+    // Using JUnitPlatform for running tests
+    useJUnitPlatform()
+}
+
+tasks.publishToMavenLocal.doLast {
+    publishing.publications.each {
+        pub -> pub.artifacts.each { artifact ->
+            println "Published artifact: ${artifact.file}"
+        }
+    }
+}
+
+group = 'io.github.duckasteroid'
+description = 'A plugin for managing multi project versions from Git'
