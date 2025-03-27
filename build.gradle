@@ -11,6 +11,7 @@ gradlePlugin {
             displayName = 'Git Multi-project Versioning Plugin'
             description = 'A plugin to provide automated project versioning from Git tags'
             implementationClass = 'io.github.duckasteroid.git.mvp.GitVersioningPlugin'
+            tags = ['version', 'git', 'publishing']
         }
     }
 }
@@ -38,18 +39,20 @@ dependencies {
     testImplementation 'org.spockframework:spock-core'
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 tasks.withType(Test).configureEach {
     // Using JUnitPlatform for running tests
     useJUnitPlatform()
 }
 
-tasks.publishToMavenLocal.doLast {
-    publishing.publications.each {
-        pub -> pub.artifacts.each { artifact ->
-            println "Published artifact: ${artifact.file}"
-        }
-    }
-}
-
 group = 'io.github.duckasteroid'
 description = 'A plugin for managing multi project versions from Git'
+// FIXME we can remove this when we have a version of this plugin that this plugin can use
+version = '0.0.1'
