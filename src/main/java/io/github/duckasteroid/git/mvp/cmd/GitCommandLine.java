@@ -4,10 +4,14 @@ import io.github.duckasteroid.git.mvp.Git;
 import io.github.duckasteroid.git.mvp.GitException;
 import io.github.duckasteroid.git.mvp.GitTag;
 
+import javax.annotation.Nullable;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 public class GitCommandLine implements Git {
@@ -18,11 +22,21 @@ public class GitCommandLine implements Git {
 	 * @throws RuntimeException If git returns an error
 	 */
 	public static ProcessResult withGit(List<String> args) {
+		return withGit(args, null);
+	}
+
+	/**
+	 * Same as earlier but with a specific working directory
+	 */
+	public static ProcessResult withGit(List<String> args, @Nullable Path workingDir) {
 		var command = new ArrayList<String>();
 		command.add("git");
 		command.addAll(args);
 		ProcessBuilder pb = new ProcessBuilder(command);
 		try {
+			if (workingDir != null) {
+				pb.directory(workingDir.toFile());
+			}
 			Process p = pb.start();
 			var result = ProcessResult.from(p);
 			GitException.check(command, result);
@@ -30,6 +44,12 @@ public class GitCommandLine implements Git {
 		} catch (IOException ioe) {
 			throw new RuntimeException(ioe);
 		}
+	}
+
+	@Override
+	public Optional<File> gitRootDir(File somewhere) {
+		//git rev-parse --show-toplevel
+		return Optional.empty();
 	}
 
 	@Override

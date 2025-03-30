@@ -1,11 +1,19 @@
 package io.github.duckasteroid.git.mvp;
 
+import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The interface between this plugin and the underlying Git VCS.
  */
 public interface Git {
+	/**
+	 * For a given filepath find the root of the git repository that contains it
+	 * @param somewhere the file or folder that might be in a git repository
+	 * @return the root of the git repository (if any)
+	 */
+	Optional<File> gitRootDir(File somewhere);
 	/**
 	 * Get the last commit ID (short or long) that touched the given path
 	 * If no path is specified, it's simply the last commit in the repo (HEAD)

@@ -16,8 +16,8 @@ public class GitUtils {
 
 
 	/**
-	 * Retrieve the git version for a project.
-	 * The following are used in order of preference:
+	 * Retrieve the sources of git based version information for a project.
+	 * The following are returned in order of preference:
 	 * <ol>
 	 *     <li>Git version tags in a "folder" matching the project path</li>
 	 *     <li>Git version tags (vXXX) with no path (e.g. v1.0.0)</li>
