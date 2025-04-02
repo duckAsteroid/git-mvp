@@ -1,6 +1,8 @@
 package io.github.duckasteroid.git.mvp;
 
+import javax.annotation.Nullable;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,11 +11,11 @@ import java.util.Optional;
  */
 public interface Git {
 	/**
-	 * For a given filepath find the root of the git repository that contains it
-	 * @param somewhere the file or folder that might be in a git repository
-	 * @return the root of the git repository (if any)
+	 * The path to the root of the git repo being used
+	 * @return a filesystem path
 	 */
-	Optional<File> gitRootDir(File somewhere);
+	Path getRootDir();
+
 	/**
 	 * Get the last commit ID (short or long) that touched the given path
 	 * If no path is specified, it's simply the last commit in the repo (HEAD)
@@ -39,18 +41,20 @@ public interface Git {
 	 */
 	String branchName();
 	/**
-	 * Get the git tags in the repo that match a given pattern
+	 * Get the git tags in the repo, that optionally match a given pattern
 	 *
-	 * @param pattern the pattern of the tag (or null)
+	 * @param pattern (optional) the pattern of the tag (or null)
 	 * @return a list of tags most recent commit first
 	 */
-	List<GitTag> gitTags(String pattern);
+	List<GitTag> gitTags(@Nullable String pattern);
 	/**
 	 * Is the repository dirty?
 	 * Optionally, check only the given path pattern.
 	 *
-	 * @param pattern a pattern to restrict the check to, or null
+	 * @param pattern (optional) a pattern to restrict the check to, or null
 	 * @return true if dirty (e.g. uncommited stuff in the repo for the given path)
 	 */
-	boolean gitDirty(String pattern);
+	boolean gitDirty(@Nullable String pattern);
+
+
 }

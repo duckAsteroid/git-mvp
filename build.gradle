@@ -34,10 +34,12 @@ repositories {
 }
 
 dependencies {
-    //2.2-groovy-3.0
-    testImplementation platform("org.spockframework:spock-bom:2.3-groovy-3.0")
-    testImplementation 'org.spockframework:spock-core'
-    testImplementation('org.junit.jupiter:junit-jupiter:5.8.1')
+    def junit = '5.11.4'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junit}"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:${junit}"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:${junit}"
+
+    testImplementation 'org.slf4j:slf4j-simple:2.0.12'
 }
 
 java {

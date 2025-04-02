@@ -1,30 +1,34 @@
 package io.github.duckasteroid.git.mvp;
 
+import io.github.duckasteroid.git.mvp.version.Version;
+
+import java.util.function.Supplier;
+
 /**
  * A source of version information for the plugin
  */
 public interface VersionSource {
-	/**
-	 * The name of the source
-	 * @return the name
-	 */
-	String name();
+	enum Type {TAG, COMMIT}
+
+	Type type();
 
 	/**
-	 * Does this source contain version information
-	 * @return true if the source has version
+	 * The raw string value of the version data source
 	 */
-	boolean hasVersion();
+	String value();
 
 	/**
-	 * The version information (if any)
-	 * @return version information
+	 * The provider of an explanation of the source of this version information
+	 * @return a function that can provide a description of where this value comes from
 	 */
-	String version();
-
+	Supplier<String> explanation();
 	/**
-	 * Parse into a version instance
+	 * The version instance itself
 	 * @return the version instance
 	 */
-	Version asVersion();
+	Version version();
+
+	default String displayString() {
+		return type() + " '" + value() + "' interpreted as version=" + version();
+	}
 }

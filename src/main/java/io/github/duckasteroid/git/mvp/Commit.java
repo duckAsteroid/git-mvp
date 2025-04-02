@@ -1,28 +1,30 @@
 package io.github.duckasteroid.git.mvp;
 
+import io.github.duckasteroid.git.mvp.version.Version;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
+
 /**
  * Represents a git commit as a version source (not preferred)
  */
-public record Commit(String commitId) implements VersionSource {
+public record Commit(Supplier<String> explanation, String commitId) implements VersionSource {
+
+    public Type type() {
+        return Type.COMMIT;
+    }
+
     @Override
-    public boolean hasVersion() {
-        return true;
-    }
-
-    public String name() {
+    public String value() {
         return commitId;
     }
 
-    public String version() {
-        return commitId;
+    public Version version() {
+        return Version.parse(commitId);
     }
 
-    public String toString() {
-        return "Commit: " + commitId;
+    @Override
+    public @NotNull String toString() {
+        return displayString();
     }
-
-    public Version asVersion() {
-        return null;
-    }
-
 }

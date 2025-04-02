@@ -1,7 +1,10 @@
 package io.github.duckasteroid.git.mvp;
 
+import io.github.duckasteroid.git.mvp.version.Version;
+
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,17 +12,19 @@ import java.util.regex.Pattern;
  * Represents data about a git tag
  */
 public class GitTag implements VersionSource {
-    private static final Pattern PATTERN = Pattern.compile("v(\\d+\\.\\d+\\.\\d+)$");
-    private static final char SEPARATOR = '\u0001';
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd@HH:mm:ss~Z");
+	private static final Pattern PATTERN = Pattern.compile(("v(\\d+\\.\\d+(?:\\.\\d+)?(?:-[A-Z0-9]+)?)"));
+	private static final char SEPARATOR = '\u0001';
+	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd@HH:mm:ss~Z");
 
-    private final String tag;
-    private final OffsetDateTime commitDate;
-    private final String subject;
-    private final String shortCommit;
-    private final String longCommit;
+	private final Supplier<String> explanation;
+	private final String tag;
+	private final OffsetDateTime commitDate;
+	private final String subject;
+	private final String shortCommit;
+	private final String longCommit;
 
-	public GitTag(String tag, OffsetDateTime commitDate, String subject, String shortCommit, String longCommit) {
+	public GitTag(Supplier<String> explanation, String tag, OffsetDateTime commitDate, String subject, String shortCommit, String longCommit) {
+		this.explanation = explanation;
 		this.tag = tag;
 		this.commitDate = commitDate;
 		this.subject = subject;
@@ -27,36 +32,46 @@ public class GitTag implements VersionSource {
 		this.longCommit = longCommit;
 	}
 
+	@Override
+	public String value() {
+		return tag;
+	}
 
-	public boolean hasVersion() {
-        Matcher matcher = PATTERN.matcher(tag);
-        return matcher.find();
-    }
+	@Override
+	public Supplier<String> explanation() {
+		return explanation;
+	}
 
-    public String name() {
-        return tag;
-    }
+	public Type type() {
+		return Type.TAG;
+	}
 
-    public String version() {
-        Matcher matcher = PATTERN.matcher(tag);
-        matcher.find();
-        return matcher.group(1);// Extract the version number
-    }
+	public String versionString() {
+		Matcher matcher = PATTERN.matcher(tag);
+		if (!matcher.find()) return tag;
+		return matcher.group(1);// Extract the version number
+	}
 
-    public Version asVersion() {
-        return new Version(version());
-    }
+	public Version version() {
+		return Version.parse(versionString());
+	}
 
-    public static GitTag parse(String formatted) {
-        String[] split = formatted.split(String.valueOf(SEPARATOR));
-        return new GitTag(split[0], OffsetDateTime.parse(split[1], DATE_FORMAT), split[2], split[3], split[4]);
-    }
+	public static GitTag parse(Supplier<String> explanation, String formatted) {
+		String[] split = formatted.split(String.valueOf(SEPARATOR));
+		if (split.length < 5) throw new IllegalArgumentException("Invalid format: " + formatted);
+		OffsetDateTime offsetDateTime = null;
+		if (!split[1].isBlank()) {
+			offsetDateTime = OffsetDateTime.parse(split[1], DATE_FORMAT);
+		}
+		return new GitTag(explanation, split[0], offsetDateTime , split[2], split[3], split[4]);
+	}
 
-    public static String formatString() {
-        return "%(refname:short)" + SEPARATOR + "%(committerdate:format:%Y-%m-%d@%H:%M:%S~%z)" +SEPARATOR + "%(subject)" + SEPARATOR + "%(objectname:short)" + SEPARATOR + "%(objectname)";
-    }
+	public static String formatString() {
+		return "%(refname:short)" + SEPARATOR + "%(committerdate:format:%Y-%m-%d@%H:%M:%S~%z)" + SEPARATOR + "%(subject)" + SEPARATOR + "%(objectname:short)" + SEPARATOR + "%(objectname)";
+	}
 
-    public String toString() {
-        return "Tag [" + tag + "]:" + version();
-    }
+	@Override
+	public String toString() {
+		return displayString();
+	}
 }

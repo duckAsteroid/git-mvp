@@ -1,21 +1,60 @@
 package io.github.duckasteroid.git.mvp.ext;
 
-import io.github.duckasteroid.git.mvp.GitUtils;
+import io.github.duckasteroid.git.mvp.GitVersionProjectWrapper;
 import org.gradle.api.Project;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+
+import javax.inject.Inject;
+import java.util.List;
 
 public class GitVersionExtension {
-	private final Project project;
-	/**
-	 * A prefix used when searching for git tags for this project (and children)
-	 * Default: no prefix
-	 */
-	public String tagPrefix = "";
+	public static final String NAME = "versioning";
+	// Properties to hold the file patterns
+	// Using ListProperty allows duplicates if needed, SetProperty ensures uniqueness
+	private final ListProperty<String> includes;
+	private final ListProperty<String> excludes;
 
-	public GitVersionExtension(Project project) {
-		this.project = project;
+	private final Property<String> dirtyQualifier;
+
+	@Inject // Inject ObjectFactory to create property instances
+	public GitVersionExtension(Project project, ObjectFactory objects) {
+		// Use ObjectFactory to create instances of Gradle's property types
+		// convention is to include all
+		this.includes = objects.listProperty(String.class).convention(List.of("**/*"));
+		this.excludes = objects.listProperty(String.class).empty();
+
+		this.dirtyQualifier = objects.property(String.class).convention("dirty");
+	}
+	// Getter methods for the properties (required by Gradle)
+	public ListProperty<String> getIncludes() {
+		return includes;
 	}
 
-	public String version() {
-		return GitUtils.gitVersion(project);
+	public ListProperty<String> getExcludes() {
+		return excludes;
+	}
+
+	public Property<String> getDirtyQualifier() {
+		return dirtyQualifier;
+	}
+
+	// --- DSL Methods for configuration convenience ---
+	// These mimic the PatternFilterable methods but operate on the properties
+
+	public void include(String... patterns) {
+		this.includes.addAll(patterns);
+	}
+
+	public void include(Iterable<String> patterns) {
+		this.includes.addAll(patterns);
+	}
+
+	public void exclude(String... patterns) {
+		this.excludes.addAll(patterns);
+	}
+	public void exclude(Iterable<String> patterns) {
+		this.excludes.addAll(patterns);
 	}
 }

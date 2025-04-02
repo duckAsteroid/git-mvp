@@ -43,4 +43,9 @@ public class ProcessResult {
     public final int getExitCode() {
         return exitCode;
     }
+
+	@Override
+	public String toString() {
+		return String.join("\n", output);
+	}
 }
