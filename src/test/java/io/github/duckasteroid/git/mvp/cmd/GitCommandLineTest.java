@@ -1,5 +1,6 @@
 package io.github.duckasteroid.git.mvp.cmd;
 
+import io.github.duckasteroid.git.mvp.Change;
 import io.github.duckasteroid.git.mvp.Git;
 import io.github.duckasteroid.git.mvp.GitTag;
 import io.github.duckasteroid.git.mvp.version.Version;
@@ -130,6 +131,23 @@ class GitCommandLineTest {
 		assertNotNull(shortCommitId);
 		assertTrue(newCommitID.contains(shortCommitId));
 
+	}
+
+	@Test
+	void gitStatus() throws IOException {
+		// first on clean structure...
+		List<Change> noChanges = git.status(null);
+		assertNotNull(noChanges);
+		assertTrue(noChanges.isEmpty());
+
+		// now add some mods
+		Files.writeString(gitRepositoryPath.resolve("test/example/file.txt"),"Test change", StandardOpenOption.APPEND);
+		Files.writeString(gitRepositoryPath.resolve("test/other/file.txt"),"Test change", StandardOpenOption.APPEND);
+		Files.writeString(gitRepositoryPath.resolve("test/newfile.txt"),"Test change", StandardOpenOption.CREATE);
+
+		List<Change> allChanges = git.status(null);
+		assertNotNull(allChanges);
+		assertEquals(3, allChanges.size());
 	}
 
 	@Test

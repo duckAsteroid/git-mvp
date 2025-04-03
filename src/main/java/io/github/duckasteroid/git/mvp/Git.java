@@ -10,11 +10,18 @@ import java.util.Optional;
  * The interface between this plugin and the underlying Git VCS.
  */
 public interface Git {
+	char NULL_CHAR = '\0';
 	/**
 	 * The path to the root of the git repo being used
 	 * @return a filesystem path
 	 */
-	Path getRootDir();
+	Optional<Path> getRootDir();
+
+	/**
+	 * The path to the working directory of the git process (often the same as {@link #getRootDir()})
+	 * @return a filesystem path
+	 */
+	Path getWorkingDir();
 
 	/**
 	 * Get the last commit ID (short or long) that touched the given path
@@ -56,5 +63,10 @@ public interface Git {
 	 */
 	boolean gitDirty(@Nullable String pattern);
 
-
+	/**
+	 * Pending changes in the git repo (from git status)
+	 * @param pattern (optional) a pattern to restrict the check to, or null
+	 * @return a list of changes (maybe empty, never null)
+	 */
+	List<Change> status(@Nullable String pattern);
 }

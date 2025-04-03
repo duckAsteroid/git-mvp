@@ -1,5 +1,6 @@
 package io.github.duckasteroid.git.mvp.cmd;
 
+import io.github.duckasteroid.git.mvp.Change;
 import io.github.duckasteroid.git.mvp.Git;
 import io.github.duckasteroid.git.mvp.GitException;
 import io.github.duckasteroid.git.mvp.GitTag;
@@ -12,28 +13,31 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class GitCommandLine implements Git {
 
 	private static final Logger log = Logging.getLogger(GitCommandLine.class);
 
-	private final Path rootDir;
+	private final Path workingDir;
 
 	public GitCommandLine(Path ctx) {
-		this.rootDir = gitRootDir(ctx.toFile()).orElseThrow(() -> new IllegalArgumentException("No git repo"));
+		this.workingDir = ctx;
 	}
 
 	@Override
-	public Path getRootDir() {
-		return rootDir;
+	public Optional<Path> getRootDir() {
+		return gitRootDir(workingDir.toFile());
+	}
+
+	@Override
+	public Path getWorkingDir() {
+		return workingDir;
 	}
 
 	/**
@@ -69,7 +73,7 @@ public class GitCommandLine implements Git {
 			}
 			args.add(path);
 		}
-		return withGit(args, rootDir, true).output().findFirst().orElseThrow();
+		return withGit(args, workingDir, true).output().findFirst().orElseThrow();
 	}
 
 	@Override
@@ -78,13 +82,13 @@ public class GitCommandLine implements Git {
 		if (path != null && !path.isBlank()) {
 			args.addAll(Arrays.asList("--", path));
 		}
-		return withGit(args, rootDir, true).output().findFirst().map(Integer::parseInt).orElseThrow();
+		return withGit(args, workingDir, true).output().findFirst().map(Integer::parseInt).orElseThrow();
 	}
 
 	@Override
 	public String branchName() {
 		var args = new ArrayList<String>(Arrays.asList("rev-parse", "--abbrev-ref", "HEAD"));
-		return withGit(args, rootDir, true).output().findFirst().orElseThrow();
+		return withGit(args, workingDir, true).output().findFirst().orElseThrow();
 	}
 
 	@Override
@@ -96,16 +100,32 @@ public class GitCommandLine implements Git {
 			args.add("refs/tags/" + pattern);
 		}
 		Supplier<String> explanation = () -> "git tags for "+ args.get(args.size() - 1);
-		return withGit(args, rootDir, true).output().map(tag -> GitTag.parse(explanation, tag)).toList();
+		return withGit(args, workingDir, true).output().map(tag -> GitTag.parse(explanation, tag)).toList();
 	}
 
 	@Override
 	public boolean gitDirty(String pattern) {
+		return status(pattern).isEmpty();
+	}
+
+	@Override
+	public List<Change> status(String pattern) {
 		ArrayList<String> args = new ArrayList<String>(Arrays.asList("status", "--short", "-z"));
 		if (pattern != null && !pattern.isBlank()) {
 			args.addAll(Arrays.asList("--", pattern));
 		}
-		return withGit(args, rootDir, true).output().anyMatch(Predicate.not(String::isBlank));
+		String output = withGit(args, workingDir, true).output().collect(Collectors.joining("\n"));
+		if (!output.isEmpty()) {
+			String[] changes = output.split(String.valueOf(Git.NULL_CHAR));
+			if (changes.length > 0) {
+				return Arrays.stream(changes)
+								.map(String::trim)
+								.filter(Predicate.not(String::isBlank))
+								.map(Change::from)
+								.toList();
+			}
+		}
+		return Collections.emptyList();
 	}
 
 	/**
@@ -142,7 +162,7 @@ public class GitCommandLine implements Git {
 	//region Testing only methods
 
 	public String commit(String message) {
-		ProcessResult commitResult = withGit(List.of("commit","-a","-m",message), rootDir, true);
+		ProcessResult commitResult = withGit(List.of("commit","-a","-m",message), workingDir, true);
 
 		String line1 = commitResult.output().findFirst().orElseThrow();
 		var regex = Pattern.compile("\\[.*?\\s([a-f0-9]+)\\]");
@@ -156,19 +176,19 @@ public class GitCommandLine implements Git {
 	}
 
 	public void lightTag(String tagName) {
-		GitCommandLine.withGit(List.of("tag", tagName), rootDir, true);
+		GitCommandLine.withGit(List.of("tag", tagName), workingDir, true);
 	}
 
 	public void annotatedTag(String tagName, String message) {
-		GitCommandLine.withGit(List.of("tag", "-a", tagName, "-m", message), rootDir, true);
+		GitCommandLine.withGit(List.of("tag", "-a", tagName, "-m", message), workingDir, true);
 	}
 
 	public void add(String path) {
-		GitCommandLine.withGit(List.of("add",path), rootDir, true);
+		GitCommandLine.withGit(List.of("add",path), workingDir, true);
 	}
 
 	public void newBranch(String branchName) {
-		GitCommandLine.withGit(List.of("checkout", "-b", branchName), rootDir, true);
+		GitCommandLine.withGit(List.of("checkout", "-b", branchName), workingDir, true);
 	}
 
 	//endregion

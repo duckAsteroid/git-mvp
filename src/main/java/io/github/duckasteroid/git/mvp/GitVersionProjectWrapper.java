@@ -19,16 +19,16 @@ import java.util.function.Function;
 public class GitVersionProjectWrapper {
 	// the Gradle project
 	private final Project project;
-	// a git command line - working in the project directory
+	// a git command line - working in the root project directory
 	private final GitCommandLine git;
 
 	public GitVersionProjectWrapper(final Project project) {
 		this.project = project;
-		this.git = new GitCommandLine(project.getProjectDir().toPath());
+		this.git = new GitCommandLine(project.getRootProject().getProjectDir().toPath());
 	}
 
 	public Path gitRootDir() {
-		return git.getRootDir();
+		return git.getRootDir().orElseThrow();
 	}
 
 	public Optional<GitVersionExtension> extension() {
