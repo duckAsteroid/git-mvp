@@ -11,6 +11,9 @@ import java.util.Optional;
  * The interface between this plugin and the underlying Git VCS.
  */
 public interface Git {
+	/**
+	 * Null character used with git command line to parse returned strings
+	 */
 	char NULL_CHAR = '\0';
 	/**
 	 * The path to the root of the git repo being used

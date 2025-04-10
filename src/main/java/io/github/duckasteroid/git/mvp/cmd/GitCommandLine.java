@@ -20,14 +20,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * An implementation of the {@link Git} API that uses the git executable and command line switches.
+ */
 public class GitCommandLine implements Git {
 
 	private static final Logger log = Logging.getLogger(GitCommandLine.class);
 
 	private final Path workingDir;
 
-	public GitCommandLine(Path ctx) {
-		this.workingDir = ctx;
+	/**
+	 * Construct to operate in the given working directory. If null this operates in the default
+	 * working directory of this process.
+	 * @param workingDirectory the working directory
+	 */
+	public GitCommandLine(Path workingDirectory) {
+		this.workingDir = workingDirectory;
 	}
 
 	@Override
@@ -133,8 +141,8 @@ public class GitCommandLine implements Git {
 	 *
 	 * @param args         the args for git
 	 * @param workingDir   (optional) a working directory for the git process
-	 * @param throwOnError
-	 * @return a result if exitCode == 0
+	 * @param throwOnError should we throw @{@link GitException} if the return code != 0
+	 * @return the result of running the git process
 	 * @throws RuntimeException If git returns an error
 	 */
 	public static ProcessResult withGit(List<String> args, @Nullable Path workingDir, boolean throwOnError) {
@@ -161,6 +169,11 @@ public class GitCommandLine implements Git {
 
 	//region Testing only methods
 
+	/**
+	 * Commit the current stage with a message
+	 * @param message Message for the commit
+	 * @return The commit ID
+	 */
 	public String commit(String message) {
 		ProcessResult commitResult = withGit(List.of("commit","-a","-m",message), workingDir, true);
 
@@ -175,18 +188,35 @@ public class GitCommandLine implements Git {
 		else throw new IllegalStateException("No commit id found");
 	}
 
+	/**
+	 * Create a lightweight tag with given name at the current HEAD
+	 * @param tagName the tage name
+	 */
 	public void lightTag(String tagName) {
 		GitCommandLine.withGit(List.of("tag", tagName), workingDir, true);
 	}
 
+	/**
+	 * Create an annotated tag with given name at the current HEAD
+	 * @param tagName the tage name
+	 * @param message the message or annotation
+	 */
 	public void annotatedTag(String tagName, String message) {
 		GitCommandLine.withGit(List.of("tag", "-a", tagName, "-m", message), workingDir, true);
 	}
 
+	/**
+	 * Add the contents of the given path to the repo
+	 * @param path the path to add
+	 */
 	public void add(String path) {
 		GitCommandLine.withGit(List.of("add",path), workingDir, true);
 	}
 
+	/**
+	 * Create and check out a new branch
+	 * @param branchName the name of the new branch
+	 */
 	public void newBranch(String branchName) {
 		GitCommandLine.withGit(List.of("checkout", "-b", branchName), workingDir, true);
 	}

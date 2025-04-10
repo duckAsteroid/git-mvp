@@ -10,33 +10,6 @@ import java.nio.file.Path;
  * @param path the path to the file concerned (from repo root)
  */
 public record Change(String status, Path path) {
-
-    public enum Status {
-        UNTRACKED('?'),
-        ADDED('A'),
-        MODIFIED('M'),
-        DELETED('D'),
-        RENAMED('R'),
-        COPIED('C');
-
-        private final char code;
-        Status(char code) {
-            this.code = code;
-        }
-
-        public char code() {
-            return code;
-        }
-
-        public static Status fromCode(char code) {
-            for (Status status : Status.values()) {
-                if (status.code() == code) {
-                    return status;
-                }
-            }
-            return null;
-        }
-    }
     /**
      * Parse the change from Git command line
      * @param s the git status

@@ -12,7 +12,14 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * A custom project extension for holding configuration data for the
+ * {@link io.github.duckasteroid.git.mvp.GitVersioningPlugin}
+ */
 public class GitVersionExtension {
+	/**
+	 * The name of the extension in the project
+	 */
 	public static final String NAME = "versioning";
 	// Properties to hold the file patterns
 	private final PatternSet autoIncrementBranches;
@@ -21,6 +28,11 @@ public class GitVersionExtension {
 
 	private final GitVersionProjectWrapper projectWrapper;
 
+	/**
+	 * Construct with a project and a Gradle object factory
+	 * @param project the project
+	 * @param objects a Gradle object factory
+	 */
 	@Inject // Inject ObjectFactory to create property instances
 	public GitVersionExtension(Project project, ObjectFactory objects) {
 		// Use ObjectFactory to create instances of Gradle's property types
@@ -48,6 +60,10 @@ public class GitVersionExtension {
 		return autoIncrementBranches;
 	}
 
+	/**
+	 * Used by Gradle
+	 * @param action the child patterns
+	 */
 	public void autoIncrementBranches(Action<? super PatternSet> action) {
 		action.execute(autoIncrementBranches);
 	}
@@ -60,6 +76,9 @@ public class GitVersionExtension {
 		return dirtyQualifier;
 	}
 
+	/**
+	 * Primarily used by unit tests to update the version on the project
+	 */
 	public void update() {
 		projectWrapper.update();
 	}

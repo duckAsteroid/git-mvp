@@ -12,11 +12,17 @@ import java.util.List;
 
 /**
  * A task added to projects by this plugin.
- * It prints out sime
+ * It prints out diagnostic information about what version is determined and why
  */
 public class ExplainVersion extends DefaultTask {
+    /**
+     * The standard name of this task
+     */
     public static final String NAME = "explainVersion";
 
+    /**
+     * Runs this task and prints out version diagnostics
+     */
     @TaskAction
     public void printVersion() {
         GitVersionProjectWrapper projectHelper = new GitVersionProjectWrapper(getProject());

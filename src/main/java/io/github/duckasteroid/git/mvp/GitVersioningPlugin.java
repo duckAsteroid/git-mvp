@@ -10,8 +10,23 @@ import org.gradle.api.tasks.TaskProvider;
 import java.io.File;
 import java.util.Optional;
 
+/**
+ * The root class for our git versioning plugin.
+ * When applied it:
+ * <ul>
+ *   <li>Adds the {@link ExplainVersion} task</li>
+ *   <li>Adds the {@link GitVersionExtension} extension</li>
+ *   <li>If the {@link Project#getVersion()} is not set, sets it to {@link GitVersionProjectWrapper#gitVersion()}</li>
+ * </ul>
+ */
 public class GitVersioningPlugin implements Plugin<Project> {
+	/**
+	 * The plugin ID
+	 */
 	public static final String ID = "io.github.duckasteroid.git-mvp";
+	/**
+	 * The task group for our {@link ExplainVersion} task
+	 */
 	public static final String GROUP = "versioning";
 
 	@Override

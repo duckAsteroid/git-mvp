@@ -27,15 +27,27 @@ public class GitVersionProjectWrapper {
 	// a git command line - working in the root project directory
 	private final GitCommandLine git;
 
+	/**
+	 * Create a wrapper for the given Gradle project
+	 * @param project a Gradle project
+	 */
 	public GitVersionProjectWrapper(final Project project) {
 		this.project = project;
 		this.git = new GitCommandLine(project.getRootProject().getProjectDir().toPath());
 	}
 
+	/**
+	 * The root directory of the git repository that contains this project
+	 * @return the path of the git repository
+	 */
 	public Path gitRootDir() {
 		return git.getRootDir().orElseThrow();
 	}
 
+	/**
+	 * Get the extension for this plugin from the project
+	 * @return a {@link GitVersionExtension}, if declared
+	 */
 	public Optional<GitVersionExtension> extension() {
 		GitVersionExtension ext = project.getExtensions().findByType(GitVersionExtension.class);
 		return Optional.ofNullable(ext);
@@ -50,7 +62,7 @@ public class GitVersionProjectWrapper {
 	 *     <li>The short form of the last commit ID on the current branch</li>
 	 * </ol>
 	 *
-	 * @return
+	 * @return a list of version sources in order
 	 */
 	public List<VersionSource> candidateVersions() {
 		// the fallback if we can't find something more specific...
@@ -115,6 +127,10 @@ public class GitVersionProjectWrapper {
 		return amendments;
 	}
 
+	/**
+	 * A set of branch naming rules for determining if auto incrementing is applied
+	 * @return a list of branch rules
+	 */
 	public List<BranchRule> branchRules() {
 		if (extension().isPresent()) {
 			ArrayList<BranchRule> result = new ArrayList<>();
@@ -159,6 +175,11 @@ public class GitVersionProjectWrapper {
 		}
 	}
 
+	/**
+	 * Use the {@link #branchRules()} to determine if the named branch is auto incremented
+	 * @param s the name of a branch (i.e. the current one)
+	 * @return true if the version is to be auto-incremented
+	 */
 	public boolean isAutoIncrementedBranch(String s) {
 		// use extension values
 		List<BranchRule> rules = branchRules();
@@ -178,7 +199,17 @@ public class GitVersionProjectWrapper {
 	 *     <li>Git version tags (vXXX) with no path (e.g. v1.0.0)</li>
 	 *     <li>The short form of the last commit ID on the current branch</li>
 	 * </ol>
-	 * @return
+	 * If the branch is auto-incrementable (default is not "main" or "master"), then the following
+	 * version modifiers are applied:
+	 * <ol>
+	 *   <li>The plugin calculates the number of commits (on the current branch) that "touch" the
+	 *   path for this project (or some subpath).</li>
+	 *   <li>This number increments the version number by that count</li>
+	 *   <li>If the working copy is "dirty" (i.e. Git determines there are changes that would need
+	 *   committing).
+	 *   The version qualifier is marked with the dirty qualifier (default "-dirty")</li>
+	 * </ol>
+	 * @return the automatically calculated version string
 	 */
 	public String gitVersion() {
 		List<VersionSource> candidates = candidateVersions();
@@ -195,20 +226,23 @@ public class GitVersionProjectWrapper {
 		return version.toString();
 	}
 
+	/**
+	 * Primarily intended for unit tests to increment the version
+	 */
 	public void update() {
 		project.setVersion(gitVersion());
 	}
 
+	/**
+	 * Get the Git used by this to get data from the project
+	 * @return a git instance
+	 */
 	public Git getGit() {
 		return git;
 	}
 
-	public Path getProjectIdPath() {
-		return Path.of(project.getPath().replace(':', '/'));
-	}
-
 	/**
-	 * The path of this project directory - relative to the git repository root
+	 * The path of this project directory - relative to the git repository {@link #gitRootDir() root}
 	 * @return the path to this project from the root of the repo
 	 */
 	public Path getGitRelativePath() {
