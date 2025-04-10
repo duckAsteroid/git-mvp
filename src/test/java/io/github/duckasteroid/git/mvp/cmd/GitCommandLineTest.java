@@ -1,14 +1,12 @@
 package io.github.duckasteroid.git.mvp.cmd;
 
 import io.github.duckasteroid.git.mvp.Change;
-import io.github.duckasteroid.git.mvp.Git;
-import io.github.duckasteroid.git.mvp.GitTag;
+import io.github.duckasteroid.git.mvp.version.source.GitTag;
 import io.github.duckasteroid.git.mvp.version.Version;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -148,6 +146,11 @@ class GitCommandLineTest {
 		List<Change> allChanges = git.status(null);
 		assertNotNull(allChanges);
 		assertEquals(3, allChanges.size());
+
+		// only a subdirectory
+		List<Change> someChanges = git.status("test/example");
+		assertNotNull(someChanges);
+		assertEquals(1, someChanges.size());
 	}
 
 	@Test

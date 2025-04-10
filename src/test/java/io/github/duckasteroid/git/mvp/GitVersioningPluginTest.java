@@ -2,6 +2,7 @@ package io.github.duckasteroid.git.mvp;
 
 import io.github.duckasteroid.git.mvp.cmd.GitCommandLine;
 import io.github.duckasteroid.git.mvp.cmd.ProcessResult;
+import io.github.duckasteroid.git.mvp.ext.GitVersionExtension;
 import io.github.duckasteroid.git.mvp.tasks.ExplainVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -16,7 +17,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -126,16 +129,28 @@ class GitVersioningPluginTest {
 	}
 
 	@Test
-	void verifyDirtyQualifierOnMain() throws IOException {
+	void verifyDirtyQualifierOnMaster() throws IOException {
 		// make child2 files dirty
 		Path child2dir = gitRepo.resolve("some/deep/path/child2");
 		Path dirtyFile = child2dir.resolve("dirty.txt");
 		Files.writeString(dirtyFile, "This file makes the repo dirty", StandardOpenOption.CREATE);
 
 		applyPluginToAllProjects();
+		parent.getAllprojects().stream()
+						.map(p -> p.getExtensions().findByType(GitVersionExtension.class))
+						.filter(Objects::nonNull)
+						.forEach(ext -> {
+							var inc = ext.getAutoIncrementBranches();
+							inc.include("master");
+							inc.getExcludes().set(Collections.emptyList());
+							ext.getDirtyQualifier().set("TEST");
+							ext.update();
+						});
+
 
 		String child2version = parent.getChildProjects().get("child2").getVersion().toString();
-		assertTrue(child2version.endsWith("-dirty"));
+		System.out.println(child2version);
+		assertTrue(child2version.endsWith("-TEST"));
 	}
 
 	@Test

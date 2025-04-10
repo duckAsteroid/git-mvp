@@ -1,4 +1,4 @@
-package io.github.duckasteroid.git.mvp;
+package io.github.duckasteroid.git.mvp.version.source;
 
 import io.github.duckasteroid.git.mvp.version.Version;
 

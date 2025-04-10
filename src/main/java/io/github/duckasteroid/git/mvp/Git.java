@@ -1,7 +1,8 @@
 package io.github.duckasteroid.git.mvp;
 
+import io.github.duckasteroid.git.mvp.version.source.GitTag;
+
 import javax.annotation.Nullable;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;

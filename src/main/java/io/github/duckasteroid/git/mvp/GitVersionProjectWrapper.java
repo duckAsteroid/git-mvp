@@ -1,17 +1,22 @@
 package io.github.duckasteroid.git.mvp;
 
+import io.github.duckasteroid.git.mvp.branch.BranchRule;
 import io.github.duckasteroid.git.mvp.cmd.GitCommandLine;
 import io.github.duckasteroid.git.mvp.ext.GitVersionExtension;
+import io.github.duckasteroid.git.mvp.ext.PatternSet;
 import io.github.duckasteroid.git.mvp.version.Version;
+import io.github.duckasteroid.git.mvp.version.source.Commit;
+import io.github.duckasteroid.git.mvp.version.source.VersionSource;
 import org.gradle.api.Project;
 import org.gradle.api.provider.Property;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * A wrapper for a Gradle {@link Project} that provides git version utilities
@@ -98,7 +103,7 @@ public class GitVersionProjectWrapper {
 		}
 		boolean dirty = git.gitDirty(projectRepoPath);
 		if (dirty) {
-			// FIXME get from extension
+			// get qualifier from extension
 			final String qualifier = extension()
 							.map(GitVersionExtension::getDirtyQualifier)
 							.map(Property::get)
@@ -110,9 +115,59 @@ public class GitVersionProjectWrapper {
 		return amendments;
 	}
 
+	public List<BranchRule> branchRules() {
+		if (extension().isPresent()) {
+			ArrayList<BranchRule> result = new ArrayList<>();
+			GitVersionExtension ext = extension().get();
+			PatternSet autoIncrementedBranches = ext.getAutoIncrementBranches();
+			// to match the branch must be included and not excluded
+			// an empty included set matches (includes) all
+			// an empty excluded set does not match (exclude) any
+
+
+			// includes ...
+			{
+				List<String> includes = autoIncrementedBranches.getIncludes().get();
+				BranchRule includeRule;
+				if (includes != null && !includes.isEmpty()) {
+					includeRule = new BranchRule("Includes: " + includes.stream().collect(Collectors.joining(",", "[", "]")),
+									includes::contains);
+				} else {
+					includeRule = new BranchRule("No includes specified, default include all", s -> true);
+				}
+				result.add(includeRule);
+			}
+
+			// excludes...
+			{
+				List<String> excludes = autoIncrementedBranches.getExcludes().get();
+				BranchRule excludeRule;
+				if (excludes != null && !excludes.isEmpty()) {
+					excludeRule = new BranchRule("Excludes: " + excludes.stream().collect(Collectors.joining(",", "[", "]")),
+									Predicate.not(excludes::contains));
+				} else {
+					excludeRule = new BranchRule("No excludes specified, default exclude none", s -> true);
+				}
+				result.add(excludeRule);
+			}
+			return result;
+		}
+		else {
+			BranchRule defaultBranchRule = new BranchRule("Branch is not 'main' or 'master",
+							s -> !(s.equals("main") || s.equals("master")));
+			return List.of(defaultBranchRule);
+		}
+	}
+
 	public boolean isAutoIncrementedBranch(String s) {
-		// FIXME use extension values
-		return !(s.equals("main") || s.equals("master"));
+		// use extension values
+		List<BranchRule> rules = branchRules();
+		for (BranchRule rule : rules) {
+			if (!rule.rule().test(s)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -138,6 +193,10 @@ public class GitVersionProjectWrapper {
 		}
 
 		return version.toString();
+	}
+
+	public void update() {
+		project.setVersion(gitVersion());
 	}
 
 	public Git getGit() {

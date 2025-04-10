@@ -1,10 +1,8 @@
 package io.github.duckasteroid.git.mvp.tasks;
 
-import io.github.duckasteroid.git.mvp.GitTag;
 import io.github.duckasteroid.git.mvp.GitVersionProjectWrapper;
 import io.github.duckasteroid.git.mvp.VersionAmendment;
-import io.github.duckasteroid.git.mvp.VersionSource;
-import io.github.duckasteroid.git.mvp.version.Version;
+import io.github.duckasteroid.git.mvp.version.source.VersionSource;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 

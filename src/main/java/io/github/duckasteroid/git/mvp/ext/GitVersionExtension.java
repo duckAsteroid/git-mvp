@@ -1,60 +1,67 @@
 package io.github.duckasteroid.git.mvp.ext;
 
 import io.github.duckasteroid.git.mvp.GitVersionProjectWrapper;
+import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Nested;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
 
 public class GitVersionExtension {
 	public static final String NAME = "versioning";
 	// Properties to hold the file patterns
-	// Using ListProperty allows duplicates if needed, SetProperty ensures uniqueness
-	private final ListProperty<String> includes;
-	private final ListProperty<String> excludes;
+	private final PatternSet autoIncrementBranches;
 
 	private final Property<String> dirtyQualifier;
+
+	private final GitVersionProjectWrapper projectWrapper;
 
 	@Inject // Inject ObjectFactory to create property instances
 	public GitVersionExtension(Project project, ObjectFactory objects) {
 		// Use ObjectFactory to create instances of Gradle's property types
 		// convention is to include all
-		this.includes = objects.listProperty(String.class).convention(List.of("**/*"));
-		this.excludes = objects.listProperty(String.class).empty();
+		List<String> includeConvention = Collections.emptyList();
+		List<String> excludeConvention = List.of("main", "master");
+		// convention is develop and any feature branch is auto incremented
+		this.autoIncrementBranches = objects.newInstance(PatternSet.class, objects, includeConvention, excludeConvention);
 
 		this.dirtyQualifier = objects.property(String.class).convention("dirty");
+
+		this.projectWrapper = new GitVersionProjectWrapper(project);
 	}
+
+
 	// Getter methods for the properties (required by Gradle)
-	public ListProperty<String> getIncludes() {
-		return includes;
+
+	/**
+	 * A set of regular expressions for branch names. If matched these branches will
+	 * have automatic version number increments applied.
+	 * @return the pattern set for this
+	 */
+	@Nested
+	public PatternSet getAutoIncrementBranches() {
+		return autoIncrementBranches;
 	}
 
-	public ListProperty<String> getExcludes() {
-		return excludes;
+	public void autoIncrementBranches(Action<? super PatternSet> action) {
+		action.execute(autoIncrementBranches);
 	}
 
+	/**
+	 * The string to append to the version as a qualifier - if the repository is dirty
+	 * @return the dirty qualifier
+	 */
 	public Property<String> getDirtyQualifier() {
 		return dirtyQualifier;
 	}
 
-	// --- DSL Methods for configuration convenience ---
-	// These mimic the PatternFilterable methods but operate on the properties
-
-	public void include(String... patterns) {
-		this.includes.addAll(patterns);
+	public void update() {
+		projectWrapper.update();
 	}
 
-	public void include(Iterable<String> patterns) {
-		this.includes.addAll(patterns);
-	}
-
-	public void exclude(String... patterns) {
-		this.excludes.addAll(patterns);
-	}
-	public void exclude(Iterable<String> patterns) {
-		this.excludes.addAll(patterns);
-	}
 }

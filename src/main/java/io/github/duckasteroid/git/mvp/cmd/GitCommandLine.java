@@ -3,7 +3,7 @@ package io.github.duckasteroid.git.mvp.cmd;
 import io.github.duckasteroid.git.mvp.Change;
 import io.github.duckasteroid.git.mvp.Git;
 import io.github.duckasteroid.git.mvp.GitException;
-import io.github.duckasteroid.git.mvp.GitTag;
+import io.github.duckasteroid.git.mvp.version.source.GitTag;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 
@@ -105,7 +105,7 @@ public class GitCommandLine implements Git {
 
 	@Override
 	public boolean gitDirty(String pattern) {
-		return status(pattern).isEmpty();
+		return !status(pattern).isEmpty();
 	}
 
 	@Override
@@ -146,10 +146,10 @@ public class GitCommandLine implements Git {
 			if (workingDir != null) {
 				pb.directory(workingDir.toFile());
 			}
-			System.out.println(">> "+String.join(" ", command));
+			//System.out.println(">> "+String.join(" ", command));
 			Process p = pb.start();
 			var result = ProcessResult.from(p);
-			System.out.printf("Git command result: %s\n%s\n------------\n", result.getExitCode(), result);
+			//System.out.printf("Git command result: %s\n%s\n------------\n", result.getExitCode(), result);
 			if (throwOnError) {
 				GitException.check(command, result);
 			}
